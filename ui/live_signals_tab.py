@@ -111,8 +111,8 @@ class LiveSignalsTab(QFrame):
         self.main_workspace.addWidget(self.channels_panel)
         self.main_workspace.addWidget(self.graphs_widget, stretch=1)
         # Wewnątrz SetUpLiveMonitoring:
-        self.ch_ecg1.toggled.connect(self.plot1.setVisible)
-        self.ch_ecg2.toggled.connect(self.plot2.setVisible)
+        #self.ch_ecg1.toggled.connect(self.plot1.setVisible)
+        #self.ch_ecg2.toggled.connect(self.plot2.setVisible)
         self.layout.addLayout(self.main_workspace)
 
     def refresh_ports(self):
