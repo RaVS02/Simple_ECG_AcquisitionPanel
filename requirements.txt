@@ -1,0 +1,10 @@
+#Simple_ECG_AcquisitionPanel # requirements.txt
+PyQt6>=6.6
+pyqtgraph>=0.13
+pyserial>=3.5
+bleak>=0.21
+scipy>=1.11
+numpy>=1.26
+wfdb>=4.1
+pyEDFlib>=0.1.22
+pandas>=2.0
