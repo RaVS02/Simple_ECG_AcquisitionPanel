@@ -112,13 +112,10 @@ class MainWindow(QMainWindow):
                     border-top-right-radius: 2px;
                     border-bottom-right-radius: 2px;
                 }}
-                QTabBar {{
-                    background-color: {config.Colors.DARK_BACKGROUND}; /* Tło całego paska */
-                    border: none;
-                }}
+                
                 QTabBar::tab {{
                     
-                    background-color: {config.Colors.DARK_BACKGROUND};
+                    background: transparent;
                     padding: 8px 15px;
                     color: {config.Colors.DARK_TEXT_SECONDARY};
                     border: none;     
@@ -150,21 +147,6 @@ class MainWindow(QMainWindow):
                     border-radius: 2px;
                     padding: 10px;
                 }}
-                QPushButton {{
-                    background-color: {config.Colors.DARK_PANEL_BG};
-                    border: 1px solid {config.Colors.DARK_BORDER};
-                    border-radius: 4px;
-                    padding: 5px 15px;
-                    color: {config.Colors.DARK_TEXT_PRIMARY};
-                }}
-                QPushButton:hover {{
-                    background-color: {config.Colors.DARK_BORDER};
-                }}
-                QPushButton:pressed {{
-                    background-color: {config.Colors.DARK_ACCENT};
-                }}
-
-                /* Styl dla list rozwijanych - kluczowy dla uniknięcia białych elementów */
                 QComboBox {{
                     background-color: {config.Colors.DARK_PANEL_BG};
                     border: 1px solid {config.Colors.DARK_BORDER};
@@ -194,6 +176,30 @@ class MainWindow(QMainWindow):
                 }}
                 QCheckBox::indicator:checked {{
                     background-color: {config.Colors.DARK_ACCENT};
+                }}
+                QPushButton {{
+                    background-color: {config.Colors.DARK_PANEL_BG};
+                    color: {config.Colors.DARK_TEXT_PRIMARY};
+                    border: 1px solid {config.Colors.DARK_BORDER};
+                    border-radius: 4px;
+                    padding: 6px 12px;
+                    min-width: 80px;
+                }}
+
+                QPushButton:hover {{
+                    background-color: {config.Colors.DARK_BORDER};
+                    border: 1px solid {config.Colors.DARK_ACCENT};
+                }}
+
+                QPushButton:pressed {{
+                    background-color: {config.Colors.DARK_ACCENT};
+                    color: {config.Colors.DARK_BACKGROUND};
+                }}
+
+                QPushButton:disabled {{
+                    color: {config.Colors.DARK_TEXT_SECONDARY};
+                    background-color: {config.Colors.DARK_BACKGROUND};
+                    border: 1px solid {config.Colors.DARK_BORDER};
                 }}
             """
         self.setStyleSheet(stylesheet)
