@@ -8,12 +8,14 @@ from PyQt6.QtCore import Qt
 
 #-- Custom imports
 from resources import config
+from resources.theme import get_stylesheet
 from ui.live_signals_tab import LiveSignalsTab
 from ui.analysis_tab import AnalysisTab
 from ui.file_view_tab import FilesViewerTab
 from ui.deeplearning_tab import DeepLearningTab
 from  ui.settings_tab import SettingsTab
 from ui.sidebar import Sidebar
+from core.settings_manager import SettingsManager
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -24,6 +26,7 @@ class MainWindow(QMainWindow):
         self.ApplyTheme('dark')
 
     def SetUpGUI(self):
+        self.settings_manager = SettingsManager()
         self.centralWidget = QWidget()
         self.setCentralWidget(self.centralWidget)
         self.mainLayout = QVBoxLayout(self.centralWidget)
@@ -33,7 +36,7 @@ class MainWindow(QMainWindow):
         # 1. Nav Bar (Góra)
         self.nav_bar = QHBoxLayout()
         self.nav_bar.setContentsMargins(15, 5, 15, 5)
-        self.logo_label = QLabel("♥ ECG Monitor")
+        self.logo_label = QLabel("<3 ECG Monitor")
         self.logo_label.setStyleSheet(f"color: {config.Colors.DARK_ACCENT}; font-size: 20px; font-weight: bold;")
         self.logo_label.setFixedWidth(200)
         self.tab_bar = QTabBar()
@@ -52,15 +55,15 @@ class MainWindow(QMainWindow):
         self.contentLayout = QHBoxLayout()
         self.contentLayout.setSpacing(0)
 
-        self.sidebar = Sidebar()
+        self.sidebar = Sidebar(self.settings_manager)
         self.contentLayout.addWidget(self.sidebar)
 
         self.stacked_widget = QStackedWidget()
-        self.tab_livemonitoring = LiveSignalsTab()
-        self.tab_analysis = AnalysisTab()
-        self.tab_files = FilesViewerTab()
-        self.tab_deeplearning = DeepLearningTab()
-        self.tab_settings = SettingsTab()
+        self.tab_livemonitoring = LiveSignalsTab(self.settings_manager)
+        self.tab_analysis = AnalysisTab(self.settings_manager)
+        self.tab_files = FilesViewerTab(self.settings_manager)
+        self.tab_deeplearning = DeepLearningTab(self.settings_manager)
+        self.tab_settings = SettingsTab(self.settings_manager)
 
         self.stacked_widget.addWidget(self.tab_livemonitoring)
         self.stacked_widget.addWidget(self.tab_analysis)
@@ -80,61 +83,7 @@ class MainWindow(QMainWindow):
         self.tab_bar.currentChanged.connect(self.stacked_widget.setCurrentIndex)
 
     def ApplyTheme(self, type="dark"):
-        if type == "dark":
-            stylesheet = f"""
-                QWidget {{
-                    font-family: "{config.FontsConfig.FONT_FAMILY}";
-                    font-size: {config.FontsConfig.FONT_SIZE}pt;
-                    color: {config.Colors.DARK_TEXT_PRIMARY};
-                }}
-                QMainWindow {{
-                    background-color: {config.Colors.DARK_BACKGROUND};
-                }}
-                QFrame#Sidebar {{
-                    background-color: {config.Colors.DARK_PANEL_BG};
-                    border-right: 1px solid {config.Colors.DARK_BORDER};
-                    border-top: 1px solid {config.Colors.DARK_BORDER};
-                    border-bottom: 1px solid {config.Colors.DARK_BORDER};
-                    border-top-right-radius: 2px;
-                    border-bottom-right-radius: 2px;
-                }}
-                
-                QTabBar::tab {{
-                    
-                    background: transparent;
-                    padding: 8px 15px;
-                    color: {config.Colors.DARK_TEXT_SECONDARY};
-                    border: none;     
-                }}
-                QTabBar::tab:hover {{
-                    color: {config.Colors.DARK_ACCENT};
-                    border-bottom: 2px solid {config.Colors.DARK_BORDER};
-                }}
-                QTabBar::tab:selected {{
-                    color: {config.Colors.DARK_ACCENT};
-                    border-bottom: 2px solid {config.Colors.DARK_ACCENT};
-                }}
-                QRadioButton {{
-                    spacing: 8px;
-                    margin-left: 5px;
-                    color: {config.Colors.DARK_TEXT_SECONDARY};
-                }}
-                QRadioButton::indicator {{
-                    width: 10px;
-                    height: 10px;
-                }}
-                QRadioButton:checked {{
-                    color: {config.Colors.DARK_ACCENT};
-                }}
-                QFrame[cssClass="panel"]{{
-                    
-                    background-color: {config.Colors.DARK_BACKGROUND};
-                    border: 1px solid {config.Colors.DARK_BORDER};
-                    border-radius: 2px;
-                    padding: 10px;
-                }}
-            """
-        self.setStyleSheet(stylesheet)
+        self.setStyleSheet(get_stylesheet(type))
     def add_separator(self, layout):
         line = QFrame()
         line.setFrameShape(QFrame.Shape.VLine)

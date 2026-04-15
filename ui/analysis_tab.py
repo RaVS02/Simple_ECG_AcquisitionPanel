@@ -3,9 +3,10 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QFrame
 
 
 class AnalysisTab(QFrame):
-    def __init__(self):
+    def __init__(self,settingsmanager):
         super().__init__()
         self.setProperty("cssClass", "panel")
+        self.settingsmanager = settingsmanager
         self.SetUpAnalysis()
 
     def SetUpAnalysis(self):

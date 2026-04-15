@@ -3,9 +3,10 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QFrame
 
 
 class DeepLearningTab(QFrame):
-    def __init__(self):
+    def __init__(self,settingsmanager):
         super().__init__()
         # Tworzymy układ dla tej konkretnej zakładki
+        self.settingsmanager = settingsmanager
         self.setProperty("cssClass", "panel")
         self.SetUpDeepLearning()
     def SetUpDeepLearning(self):

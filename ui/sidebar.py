@@ -5,9 +5,10 @@ from resources import config
 
 
 class Sidebar(QFrame):
-    def __init__(self):
+    def __init__(self,settingsmanager):
         super().__init__()
         self.setFixedWidth(220)  # Stała szerokość zgodna z mockupem
+        self.settingsmanager=settingsmanager
         self.setObjectName("Sidebar")  # Kluczowe dla stylizacji QSS
         self.initUI()
 
@@ -66,5 +67,6 @@ class Sidebar(QFrame):
         line = QFrame()
         line.setFrameShape(QFrame.Shape.HLine)
         line.setFrameShadow(QFrame.Shadow.Plain)
-        line.setStyleSheet(f"background-color:{config.Colors.DARK_BACKGROUND}; min-height: 1px; max-height: 1px; margin: 5px 0px;")
+        # Nadajemy ID, żeby ostylować to w theme.py
+        line.setObjectName("SidebarSeparator")
         layout.addWidget(line)
