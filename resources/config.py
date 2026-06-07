@@ -3,7 +3,7 @@
 class MainProgramConfig:
     WINDOW_TITLE = "EKG Monitor v0.1"
     WINDOW_SIZE = (1280, 800)
-
+    WINDOW_ICON = 'resources/icons/wave-square-solid.png'  # Ścieżka do ikony okna
 
 class Colors:
     # ==========================================
@@ -16,6 +16,14 @@ class Colors:
     HEART_COLOR = "#ff4455"  # Czerwony akcent (nagrywanie/błędy)
     DARK_ACCENT = "#00d4aa"  # Główny zielony/morski akcent
     ANALYSIS_ACCENT = "#7c6af7"  # Fioletowy akcent (np. do drugiego wykresu)
+    PPG_ACCENT="#277AAA"
+
+    # ==========================================
+    # KOLORY SYGNAŁÓW (Do wykresów pyqtgraph)
+    # ==========================================
+    SIGNAL_ECG = "#00d4aa"  # Klasyczny medyczny morski/zielony
+    SIGNAL_PPG = "#ff6b6b"  # Koralowy czerwony/pomarańcz (pulsoksymetria/krew)
+    SIGNAL_PCG = "#4da8da"  # Jasnoniebieski dla fal dźwiękowych (Fonokardiogram)
 
     # ==========================================
     # TŁA I POWIERZCHNIE (Surfaces)
@@ -34,10 +42,11 @@ class Colors:
     # ==========================================
     # TEKSTY (Typography)
     # ==========================================
-    DARK_TEXT_TITLE = "#e8eaf0"  # Prawie biały - Główne wartości, statystyki
-    DARK_TEXT_PRIMARY = "#7a8499"  # Jasnoszary - Wartości w polach, zwykły tekst
-    DARK_TEXT_SECONDARY = "#4a5570"  # Średnioszary - Standardowe etykiety (labels)
-    DARK_TEXT_MUTED = "#2e3450"  # Bardzo ciemny szary - Małe nagłówki sekcji
+    # Teksty
+    DARK_TEXT_TITLE = "#ffffff"  # Czysta biel dla głównych tytułów
+    DARK_TEXT_PRIMARY = "#c0c8d0"  # Jasnoszary
+    DARK_TEXT_SECONDARY = "#8b9bb4"  # Znacznie jaśniejszy szary-niebieski (było #4a5570)
+    DARK_TEXT_MUTED = "#5c6784"  # Widoczny wyciszony (było #2e3450)
 
     # ==========================================
     # STATUSY I ODZNAKI (Badges)

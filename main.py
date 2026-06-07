@@ -1,5 +1,7 @@
 import sys
-from PyQt6.QtWidgets import QApplication,QStyleFactory
+
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import QApplication,QStyleFactory,QMainWindow
 from ui.main_window import MainWindow
 def main():
     app = QApplication(sys.argv)

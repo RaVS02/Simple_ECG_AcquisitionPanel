@@ -244,6 +244,22 @@ def get_stylesheet(theme='dark'):
             max-height: 1px;
             margin: 5px 0px;
         }}
+        /* --- NAGŁÓWKI SEKCJI --- */
+        QLabel[cssClass="section-title"] {{
+                    color: {config.Colors.DARK_TEXT_MUTED}; 
+                    font-size: 9pt; 
+                    font-weight: bold; 
+                    letter-spacing: 1px;
+                    text-transform: uppercase;
+                    padding: 0px;
+                    margin-bottom: 5px;
+        }}
+        QLabel[cssClass="card-title"] {{
+                    color: {config.Colors.DARK_TEXT_SECONDARY}; 
+                    font-size: 10pt; 
+                    font-weight: bold;
+        }}
+                        
         """
 
     elif theme == 'light':
@@ -465,9 +481,24 @@ def get_stylesheet(theme='dark'):
                     border-radius: 10px;
                 }}
                 QFrame#SidebarSeparator {{
-                    background-color: {config.Colors.LIGHT_BORDER};
+                    background-color: {config.Colors.LIGHT_ACCENT};
                     min-height: 1px;
                     max-height: 1px;
                     margin: 5px 0px;
+                    }}
+                /* --- NAGŁÓWKI SEKCJI --- */
+                QLabel[cssClass="section-title"] {{
+                    color: {config.Colors.LIGHT_TEXT_MUTED}; 
+                    font-size: 9pt; 
+                    font-weight: bold; 
+                    letter-spacing: 1px;
+                    text-transform: uppercase;
+                    padding: 0px;
+                    margin-bottom: 5px;
+                }}
+                QLabel[cssClass="card-title"] {{
+                    color: {config.Colors.LIGHT_TEXT_SECONDARY}; 
+                    font-size: 10pt; 
+                    font-weight: bold;
                 }}
                 """
