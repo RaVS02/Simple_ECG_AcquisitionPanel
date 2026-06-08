@@ -88,10 +88,15 @@ class MainWindow(QMainWindow):
         # Sygnały
         self.tab_bar.currentChanged.connect(self.stacked_widget.setCurrentIndex)
         self.theme_btn.clicked.connect(self.toggle_theme)
-
+        self.tabs['live'].connection_status_changed.connect(self.update_status_label)
         # Inicjalne style dla elementów dynamicznych
         self.update_dynamic_styles()
 
+    def update_status_label(self, text):
+        """Aktualizuje stały label w pasku stanu."""
+        self.status_info_label.setText(text)
+        is_connected = "Połączono" in text
+        self.sidebar.update_connection_status(is_connected)
     def update_dynamic_styles(self):
         """Aktualizuje style, które zależą od motywu, a nie są w QSS"""
         current = self.settings_manager.get_theme()

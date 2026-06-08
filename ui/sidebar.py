@@ -47,6 +47,7 @@ class Sidebar(QFrame):
         self.info_labels['bandpass'] = self.add_info_row(layout, "Pasmowy:", "---")
         self.info_labels['baseline'] = self.add_info_row(layout, "Usuw. dryfu:", "---")
         self.info_labels['spo2'] = self.add_info_row(layout, "SpO2 ESP32:", "---")
+        self.info_labels['smoothing'] = self.add_info_row(layout, "Wygł. PPG:", "---")
         self.update_all_styles(active=False)
         self.refresh_data()
 
@@ -82,6 +83,7 @@ class Sidebar(QFrame):
         spo2_esp = self.settingsmanager.get_setting("channels_ppg", "spo2_esp32")
         bp_enabled = self.settingsmanager.get_setting("dsp", "bandpass_enabled")
         baseline = self.settingsmanager.get_setting("dsp", "baseline_wander_removal")
+        smoothing_active = self.settingsmanager.get_setting("dsp", "moving_average_smoothing")
         # Logika budowania tekstu aktywnych kanalow
         active_str = ""
         if ecg_active and ppg_active:
@@ -94,6 +96,7 @@ class Sidebar(QFrame):
             active_str = "Brak"
 
         # Aktualizacja etykiet
+
         self.info_labels['ecg_rate'].setText(f"EKG próbk.: {ecg_rate} Hz")
         self.info_labels['ppg_rate'].setText(f"PPG próbk.: {ppg_rate} Hz")
         self.info_labels['lead'].setText(f"Odprow.: {lead}")
@@ -104,7 +107,7 @@ class Sidebar(QFrame):
 
         self.info_labels['bandpass'].setText(f"Pasmowy: {'wł' if bp_enabled else 'wył'}")
         self.info_labels['baseline'].setText(f"Usuw. dryfu: {'wł' if baseline else 'wył'}")
-
+        self.info_labels['smoothing'].setText(f"Wygladzanie: {"wł" if smoothing_active else "wył"}")
         # Zarzadzanie kolorami
         theme = self.settingsmanager.get_theme()
         text_color = config.Colors.DARK_TEXT_PRIMARY if theme == 'dark' else config.Colors.LIGHT_TEXT_PRIMARY
@@ -112,9 +115,11 @@ class Sidebar(QFrame):
         for key, label in self.info_labels.items():
             if key == 'ppg_rate' and ppg_active:
                 label.setStyleSheet(f"color: {config.Colors.SIGNAL_PPG}; font-size: 10pt;")
+            elif key == 'mode' and "Połączony" in label.text():
+                label.setStyleSheet(f"color: {config.Colors.POSITIVE_STATUS}; font-size: 10pt;")
             elif key == 'ecg_rate' and ecg_active:
                 label.setStyleSheet(f"color: {config.Colors.SIGNAL_ECG}; font-size: 10pt;")
-            elif key in ['notch', 'spo2', 'bandpass', 'baseline'] and "wł" in label.text():
+            elif key in ['notch', 'spo2', 'bandpass', 'baseline','smoothing'] and "wł" in label.text():
                 label.setStyleSheet(f"color: {config.Colors.POSITIVE_STATUS}; font-size: 10pt;")
             else:
                 label.setStyleSheet(f"color: {text_color}; font-size: 10pt;")
@@ -138,3 +143,12 @@ class Sidebar(QFrame):
         style = f"background-color: {color}; min-height: 1px; max-height: 1px; margin: 5px 0px;"
         for element in self.hover_elements:
             element.setStyleSheet(style)
+
+    def update_connection_status(self, is_connected):
+        if is_connected:
+            self.info_labels['mode'].setText("Sygnał: Połączony")
+        else:
+            self.info_labels['mode'].setText("Sygnał: Rozłączony")
+
+        # Wymuszamy przeliczenie kolorów
+        self.refresh_data()

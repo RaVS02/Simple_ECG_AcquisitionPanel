@@ -156,11 +156,11 @@ class SettingsTab(QFrame):
         self.check_notch = QCheckBox("Filtr notch 50 Hz (EKG)")
         self.check_bandpass = QCheckBox("Filtr pasmowy 0.5–40 Hz")
         self.check_baseline = QCheckBox("Usuwanie dryfu linii bazowej")
-
+        self.check_smoothing = QCheckBox("Wygładzanie (średnia ruchoma)")
         dsp_layout.addWidget(self.check_notch)
         dsp_layout.addWidget(self.check_bandpass)
         dsp_layout.addWidget(self.check_baseline)
-
+        dsp_layout.addWidget(self.check_smoothing)
         scroll_layout.addWidget(dsp_card)
         # --- SEKCJA: WIZUALIZACJA I WYKRESY ---
         vis_card = QFrame()
@@ -313,6 +313,7 @@ class SettingsTab(QFrame):
         self.check_notch.stateChanged.connect(lambda s: self.update_config("dsp", "notch_50hz", s == 2))
         self.check_bandpass.stateChanged.connect(lambda s: self.update_config("dsp", "bandpass_enabled", s == 2))
         self.check_baseline.stateChanged.connect(lambda s: self.update_config("dsp", "baseline_wander_removal", s == 2))
+        self.check_smoothing.stateChanged.connect(lambda s: self.update_config("dsp", "moving_average_smoothing", s == 2))
         # 5. Wizualizacja (zapis)
         self.combo_gain.currentTextChanged.connect(
             lambda v: self.update_config("acquisition", "gain", float(v.replace("x", ""))))
@@ -369,6 +370,7 @@ class SettingsTab(QFrame):
         self.check_notch.setChecked(mgr.get_setting("dsp", "notch_50hz"))
         self.check_bandpass.setChecked(mgr.get_setting("dsp", "bandpass_enabled"))
         self.check_baseline.setChecked(mgr.get_setting("dsp", "baseline_wander_removal"))
+        self.check_smoothing.setChecked(mgr.get_setting("dsp", "moving_average_smoothing"))
         # 5. Wizualizacja (odczyt)
         self.combo_gain.setCurrentText(f"{mgr.get_setting('acquisition', 'gain')}x")
         self.combo_scale.setCurrentText(f"±{int(mgr.get_setting('acquisition', 'y_scale_mv'))} mV")
