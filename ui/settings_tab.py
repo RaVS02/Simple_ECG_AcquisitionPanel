@@ -25,10 +25,19 @@ class SettingsTab(QFrame):
 
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setStyleSheet("QScrollArea { border: none; background: transparent; }")
-        scroll.viewport().setStyleSheet("background: transparent;")
+
+        # NAPRAWA: Używamy unikalnych ID (#), aby styl przezroczystości
+        # NIE kaskadował (nie niszczył) ComboBoxów i QLineEditów wewnątrz.
+        scroll.setObjectName("SettingsScroll")
+        scroll.setStyleSheet("#SettingsScroll { border: none; background: transparent; }")
+
+        scroll.viewport().setObjectName("SettingsViewport")
+        scroll.viewport().setStyleSheet("#SettingsViewport { background: transparent; }")
 
         scroll_content = QWidget()
+        scroll_content.setObjectName("SettingsContent")
+        scroll_content.setStyleSheet("#SettingsContent { background: transparent; }")
+
         scroll_layout = QVBoxLayout(scroll_content)
         scroll_layout.setContentsMargins(20, 20, 20, 20)
         scroll_layout.setSpacing(20)
@@ -285,9 +294,33 @@ class SettingsTab(QFrame):
             """
 
     def update_theme(self, theme):
+        # 1. Pobranie odpowiedniego stylu dla QLineEdit
         style = self.get_input_style(theme)
-        for w in [self.input_ip, self.input_port, self.input_ble, self.input_interval]:
+
+        # 2. Aktualizacja WSZYSTKICH pół tekstowych (dodane brakujące pola)
+        line_edits = [
+            self.input_ip,
+            self.input_port,
+            self.input_ble,
+            self.input_dir,  # Brakowało!
+            self.input_interval,
+            self.input_retro_buffer  # Brakowało!
+        ]
+
+        for w in line_edits:
             w.setStyleSheet(style)
+
+        # 3. Wymuszenie odświeżenia stylów dla Selectboxów (QComboBox)
+        combos = [
+            self.combo_mode, self.combo_format, self.combo_ecg_rate,
+            self.combo_ecg_lead, self.combo_ppg_rate, self.combo_gain,
+            self.combo_scale, self.combo_window, self.combo_storage_format
+        ]
+
+        for combo in combos:
+            combo.style().unpolish(combo)
+            combo.style().polish(combo)
+            combo.update()
 
     def connect_ui_signals(self):
         # 1. Połączenie

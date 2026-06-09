@@ -1,18 +1,18 @@
 {
     "ui": {
-        "theme": "light"
+        "theme": "dark"
     },
     "connection": {
         "mode": "WiFi UDP",
         "esp_ip": "192.168.0.116",
         "port": 5005,
         "ble_name": "SignalMonitor",
-        "packet_format": "CSV (tekstowy)"
+        "packet_format": "JSON + Base64"
     },
     "channels_ecg": {
         "active": true,
         "rate_hz": 1000,
-        "lead": "I"
+        "lead": "aVF"
     },
     "channels_ppg": {
         "raw_active": true,
@@ -21,7 +21,7 @@
     },
     "acquisition": {
         "gain": 1.0,
-        "y_scale_mv": 2.0,
+        "y_scale_mv": 1.0,
         "preview_window_s": 10.0
     },
     "dsp": {
@@ -32,7 +32,7 @@
     },
     "storage": {
         "output_dir": "./data/EKG",
-        "default_format": "EDF",
+        "default_format": "JSON",
         "auto_save_interval_min": 10,
         "retro_buffer_min": 5
     }

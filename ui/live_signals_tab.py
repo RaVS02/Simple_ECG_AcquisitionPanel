@@ -66,7 +66,7 @@ class LiveSignalsTab(QFrame):
         self.port_combo = QComboBox()
         self.port_combo.setMinimumWidth(320)
 
-        self.refresh_btn = QPushButton("Odsweiz")
+        self.refresh_btn = QPushButton("Odśwież")
         self.refresh_btn.clicked.connect(self.refresh_ports)
 
         self.conn_layout1row.addWidget(self.port_label)

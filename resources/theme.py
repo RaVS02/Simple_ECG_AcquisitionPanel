@@ -126,7 +126,7 @@ def get_stylesheet(theme='dark'):
         QComboBox:hover {{
             border: 1px solid {config.Colors.DARK_ACCENT};
         }}
-        
+
         /* 1. KONTENER STRZAŁKI (Usuwa artefakty i ma zaokrąglone prawe rogi) */
         QComboBox::drop-down {{
             subcontrol-origin: padding;
@@ -164,14 +164,14 @@ def get_stylesheet(theme='dark'):
             selection-color: {config.Colors.DARK_BACKGROUND}; 
             outline: none; 
         }}
-        
+
         /* --- ELEMENTY LISTY --- */
-        
+
         QComboBox::item:selected, QComboBox::item:hover {{
             background-color: {config.Colors.DARK_ACCENT};
             color: {config.Colors.DARK_BACKGROUND};
         }}
-        
+
         /* --- PTASZEK (Wskaźnik zaznaczenia) --- */
         QComboBox::indicator {{
             width: 14px;
@@ -259,7 +259,54 @@ def get_stylesheet(theme='dark'):
                     font-size: 10pt; 
                     font-weight: bold;
         }}
-                        
+        /* --- Pasek Pionowy (Vertical) --- */
+        QScrollBar:vertical {{
+            background-color: {config.Colors.DARK_PANEL_BG};
+            width: 10px;
+            margin: 0px;
+            border-radius: 5px;
+        }}
+        QScrollBar::handle:vertical {{
+            background-color: {config.Colors.DARK_BORDER};
+            min-height: 20px;
+            border-radius: 5px;
+        }}
+        QScrollBar::handle:vertical:hover {{
+            background-color: {config.Colors.DARK_ACCENT};
+        }}
+
+        /* --- Pasek Poziomy (Horizontal) --- */
+        QScrollBar:horizontal {{
+            background-color: {config.Colors.DARK_PANEL_BG};
+            height: 10px;
+            margin: 0px;
+            border-radius: 5px;
+        }}
+        QScrollBar::handle:horizontal {{
+            background-color: {config.Colors.DARK_BORDER};
+            min-width: 20px;
+            border-radius: 5px;
+        }}
+        QScrollBar::handle:horizontal:hover {{
+            background-color: {config.Colors.DARK_ACCENT};
+        }}
+
+        /* --- Ukrycie strzałek i reset tła stron --- */
+        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical,
+        QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{
+            background: none;
+            width: 0px;
+            height: 0px;
+        }}
+        QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical,
+        QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {{
+            background: none;
+        }}
+
+        /* --- Narożnik łączący oba paski (Corner) --- */
+        QSizeGrip {{
+            background-color: transparent;
+        }}            
         """
 
     elif theme == 'light':
@@ -271,7 +318,7 @@ def get_stylesheet(theme='dark'):
                     font-family: "{config.FontsConfig.FONT_FAMILY}";
                     font-size: {config.FontsConfig.FONT_SIZE}pt;
                     color: {config.Colors.LIGHT_TEXT_PRIMARY};
-                    
+
                 }}
                 QMainWindow {{
                     background-color: {config.Colors.LIGHT_BACKGROUND};
@@ -407,21 +454,21 @@ def get_stylesheet(theme='dark'):
                     outline: none;
                     border-radius: 5px; /* Usuwa zaokrąglenia na liście */
                     padding: 2px;
-                    
+
                     }}
-                
+
                 QComboBox::item:selected, QComboBox::item:hover {{
                     background-color: {config.Colors.DARK_ACCENT};
                     color: {config.Colors.LIGHT_PANEL_BG};
-                    
+
                 }}
                 QComboBox::indicator {{
                     width: 14px;
                     height: 14px;
                     margin-left: 5px;
-                    
+
                 }}
-                
+
 
                 QCheckBox {{
                     color: {config.Colors.LIGHT_TEXT_SECONDARY};
@@ -500,5 +547,53 @@ def get_stylesheet(theme='dark'):
                     color: {config.Colors.LIGHT_TEXT_SECONDARY}; 
                     font-size: 10pt; 
                     font-weight: bold;
+                }}
+                /* --- Pasek Pionowy (Vertical) --- */
+                QScrollBar:vertical {{
+                    background-color: {config.Colors.LIGHT_PANEL_BG};
+                    width: 10px;
+                    margin: 0px;
+                    border-radius: 5px;
+                }}
+                QScrollBar::handle:vertical {{
+                    background-color: {config.Colors.LIGHT_BORDER};
+                    min-height: 20px;
+                    border-radius: 5px;
+                }}
+                QScrollBar::handle:vertical:hover {{
+                    background-color: {config.Colors.LIGHT_ACCENT};
+                }}
+
+                /* --- Pasek Poziomy (Horizontal) --- */
+                QScrollBar:horizontal {{
+                    background-color: {config.Colors.LIGHT_PANEL_BG};
+                    height: 10px;
+                    margin: 0px;
+                    border-radius: 5px;
+                }}
+                QScrollBar::handle:horizontal {{
+                    background-color: {config.Colors.LIGHT_BORDER};
+                    min-width: 20px;
+                    border-radius: 5px;
+                }}
+                QScrollBar::handle:horizontal:hover {{
+                    background-color: {config.Colors.LIGHT_ACCENT};
+                }}
+
+                /* --- Ukrycie strzałek i reset tła stron --- */
+                QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical,
+                QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{
+                    background: none;
+                    width: 0px;
+                    height: 0px;
+                }}
+                QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical,
+                QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {{
+                    background: none;
+                }}
+
+                /* --- Narożnik łączący oba paski (Corner) --- */
+                QSizeGrip {{
+                    background-color: transparent;
                 }}
                 """
