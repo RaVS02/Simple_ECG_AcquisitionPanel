@@ -11,17 +11,17 @@
     },
     "channels_ecg": {
         "active": true,
-        "rate_hz": 1000,
+        "rate_hz": 250,
         "lead": "aVF"
     },
     "channels_ppg": {
         "raw_active": true,
         "spo2_esp32": true,
-        "rate_hz": 1000
+        "rate_hz": 250
     },
     "acquisition": {
-        "gain": 1.0,
-        "y_scale_mv": 1.0,
+        "gain": 5.0,
+        "y_scale_mv": 5.0,
         "preview_window_s": 10.0
     },
     "dsp": {
@@ -32,7 +32,7 @@
     },
     "storage": {
         "output_dir": "./data/EKG",
-        "default_format": "JSON",
+        "default_format": "CSV",
         "auto_save_interval_min": 10,
         "retro_buffer_min": 5
     }
