@@ -1,7 +1,3 @@
-import os
-import csv
-import json
-from datetime import datetime
 import numpy as np
 import requests
 from PyQt6.QtCore import pyqtSignal
@@ -129,6 +125,12 @@ class LiveSignalsTab(QFrame):
 
         self.add_vertical_separator(self.toolbox_layout)
 
+        self.clear_buf_btn = QPushButton("Wyczysc RAM")
+        self.clear_buf_btn.clicked.connect(self.clear_buffers)
+        self.toolbox_layout.addWidget(self.clear_buf_btn)
+
+        self.add_vertical_separator(self.toolbox_layout)
+
         self.freeze_btn = QPushButton("Zamroz")
         self.freeze_btn.clicked.connect(self.toggle_freeze_charts)
         self.toolbox_layout.addWidget(self.freeze_btn)
@@ -179,8 +181,23 @@ class LiveSignalsTab(QFrame):
         sep.setStyleSheet(f"border-left: 1px solid {config.Colors.DARK_BORDER}; margin: 2px 8px;")
         layout.addWidget(sep)
 
+    def clear_buffers(self):
+        if hasattr(self, 'retro_buffer'):
+            self.retro_buffer.clear()
+        if hasattr(self, 'time_buffer') and self.time_buffer is not None:
+            self.time_buffer.fill(np.nan)
+        if hasattr(self, 'ecg_data') and self.ecg_data is not None:
+            self.ecg_data.fill(np.nan)
+        if hasattr(self, 'ppg_data') and self.ppg_data is not None:
+            self.ppg_data.fill(np.nan)
+        if hasattr(self, 'ecg_50hz_buffer'):
+            self.ecg_50hz_buffer.clear()
+
+        self.recorded_samples_count = 0
+        self.data_changed_flag = True
+        self.connection_status_changed.emit("Status: RAM wyczyszczony")
+
     def update_format_buttons(self):
-        """Podświetla przycisk odpowiadający domyślnemu formatowi zapisu"""
         fmt = self.settingsmanager.get_setting("storage", "default_format")
         btn_map = {
             "EDF": self.export_edf_btn,
@@ -324,7 +341,6 @@ class LiveSignalsTab(QFrame):
     # ==========================================
 
     def _get_filename_prefix(self):
-        """Generuje człon nazwy ze znacznikami aktywnych kanałów i ich częstotliwości"""
         ecg_active = self.settingsmanager.get_setting("channels_ecg", "active")
         ppg_active = self.settingsmanager.get_setting("channels_ppg", "raw_active")
         ecg_rate = self.settingsmanager.get_setting("channels_ecg", "rate_hz") or 1000
@@ -351,7 +367,6 @@ class LiveSignalsTab(QFrame):
                   'physical_min': -5.0, 'digital_max': 32767, 'digital_min': -32768, 'transducer': 'AD8232',
                   'prefilter': ''}
             channel_info.append(ch)
-            # Tworzymy jednowymiarową tablicę NumPy
             data_list.append(np.array([r[0] for r in buffer_data], dtype=np.float64))
 
         if ppg_active:
@@ -360,13 +375,10 @@ class LiveSignalsTab(QFrame):
                   'prefilter': ''}
             channel_info.append(ch)
             idx = 1 if ecg_active else 0
-            # Tworzymy jednowymiarową tablicę NumPy
             data_list.append(np.array([r[idx] for r in buffer_data], dtype=np.float64))
 
         f = pyedflib.EdfWriter(filename, len(channel_info), file_type=pyedflib.FILETYPE_EDFPLUS)
         f.setSignalHeaders(channel_info)
-
-        # Używamy poprawnej funkcji wysokopoziomowej, która przyjmuje listę tablic 1D
         f.writeSamples(data_list)
         f.close()
 
@@ -395,6 +407,10 @@ class LiveSignalsTab(QFrame):
                     fmt=fmt_list, write_dir=out_dir)
 
     def toggle_recording(self):
+        import os
+        import csv
+        import json
+        from datetime import datetime
         if not self.recording_state:
             out_dir = self.settingsmanager.get_setting("storage", "output_dir")
             os.makedirs(out_dir, exist_ok=True)
@@ -436,7 +452,6 @@ class LiveSignalsTab(QFrame):
                 self.connection_status_changed.emit(f"Status: Blad utworzenia pliku: {e}")
                 return
         else:
-            # ZATRZYMYWANIE NAGRYWANIA I ZRZUT DANYCH
             self.recording_state = False
             ecg_active = self.settingsmanager.get_setting("channels_ecg", "active")
             ppg_active = self.settingsmanager.get_setting("channels_ppg", "raw_active")
@@ -467,6 +482,7 @@ class LiveSignalsTab(QFrame):
                             data["signals"]["PPG"] = [r[idx] for r in self.ram_continuous_buffer]
 
                         with open(self.recording_full_path + ".json", 'w') as f:
+                            import json
                             json.dump(data, f)
 
                     elif self.current_recording_format == "EDF":
@@ -481,10 +497,9 @@ class LiveSignalsTab(QFrame):
                     self.ram_continuous_buffer = []
 
                 except ImportError as ie:
-                    self.connection_status_changed.emit(
-                        f"Status: Brak paczki {ie.name}. Zainstaluj za pomoca: pip install pyedflib wfdb")
+                    self.connection_status_changed.emit(f"Status: Brak paczki {ie.name}.")
                 except Exception as e:
-                    print(f"Blad zapisu z RAM: {e}")
+                    pass
 
             self.recording_btn.setText('NAGRYWAJ')
             self.recording_btn.setProperty("cssClass", "danger")
@@ -505,6 +520,10 @@ class LiveSignalsTab(QFrame):
         self.export_buffer(fmt)
 
     def export_buffer(self, format_type):
+        import os
+        import csv
+        import json
+        from datetime import datetime
         if not self.retro_buffer:
             self.connection_status_changed.emit("Status: Bufor jest pusty, brak danych.")
             return
@@ -571,8 +590,7 @@ class LiveSignalsTab(QFrame):
                 self.connection_status_changed.emit(f"Status: Zapisano zrzut WFDB (rekord: {record_name})")
 
         except ImportError as ie:
-            self.connection_status_changed.emit(
-                f"Status: Brak paczki {ie.name}. Zainstaluj za pomoca: pip install pyedflib wfdb")
+            self.connection_status_changed.emit(f"Status: Brak paczki {ie.name}.")
         except Exception as e:
             self.connection_status_changed.emit(f"Status: Blad zapisu {format_type}: {e}")
 
@@ -604,11 +622,6 @@ class LiveSignalsTab(QFrame):
         self.window_s = self.settingsmanager.get_setting("acquisition", "preview_window_s") or 5.0
         self.sampling_rate = self.settingsmanager.get_setting("channels_ecg", "rate_hz") or 1000
 
-        # POPRAWKA 1: Fizyczne wymuszenie gigantycznego rozmiaru bufora graficznego.
-        # Niezależnie od tego, czy pracujemy na 250 Hz czy 1000 Hz, rezerwujemy pamięć
-        # na 1.5-krotność okna przy MAKSYMALNEJ częstotliwości (1000 Hz).
-        # Rozwiązuje to problem "wczesnego czyszczenia" (pustej lewej strony) w przypadku,
-        # gdy ESP32 wysyła dane szybciej niż zakłada to wybrana w panelu częstotliwość.
         self.buffer_size = int(self.window_s * 1000 * 1.5)
 
         retro_min = self.settingsmanager.get_setting("storage", "retro_buffer_min") or 5
@@ -703,7 +716,7 @@ class LiveSignalsTab(QFrame):
             ts, ekg_raw, ppg_raw = struct.unpack('<Ihh', chunk)
 
             hardware_time_s = ts / 1000.0
-            ecg_mv_raw = (ekg_raw - 2048.0) / 400.0
+            ecg_mv_raw = (ekg_raw - 2048.0) / 800.0
 
             self.retro_buffer.append((ecg_mv_raw, ppg_raw))
 
@@ -769,9 +782,7 @@ class LiveSignalsTab(QFrame):
     def update_charts_display(self):
         import time
 
-        # 1. Obsługa Timera na podstawie rzeczywistego czasu komputera (time.time)
         if self.recording_state:
-            # Inicjalizacja zegara przy pierwszym uruchomieniu nagrywania
             if getattr(self, '_rec_start_clock', None) is None:
                 self._rec_start_clock = time.time()
                 self._pause_clock_accum = 0.0
@@ -779,26 +790,22 @@ class LiveSignalsTab(QFrame):
 
             now = time.time()
 
-            # Jeśli jest pauza, akumulujemy czas przestoju, aby go potem odjąć
             if self.pause_state:
                 self._pause_clock_accum += (now - self._last_clock)
 
             self._last_clock = now
 
-            # Obliczenie idealnego czasu trwania nagrania
             elapsed_s = int(now - self._rec_start_clock - self._pause_clock_accum)
             m, s = divmod(elapsed_s, 60)
             h, m = divmod(m, 60)
             self.timer_label.setText(f"{h:02d}:{m:02d}:{s:02d}")
         else:
             self.timer_label.setText("00:00:00")
-            # Sprzątanie zmiennych po zakończeniu nagrywania
             if hasattr(self, '_rec_start_clock'):
                 del self._rec_start_clock
                 del self._pause_clock_accum
                 del self._last_clock
 
-        # 2. Odświeżanie Wykresów (bez zmian)
         if not self.charts_frozen and self.data_changed_flag:
             valid_mask = ~np.isnan(self.time_buffer)
             valid_times = self.time_buffer[valid_mask]
