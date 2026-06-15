@@ -11,13 +11,13 @@
     },
     "channels_ecg": {
         "active": true,
-        "rate_hz": 250,
+        "rate_hz": 1000,
         "lead": "aVF"
     },
     "channels_ppg": {
         "raw_active": true,
         "spo2_esp32": true,
-        "rate_hz": 250
+        "rate_hz": 1000
     },
     "acquisition": {
         "gain": 5.0,
@@ -32,7 +32,7 @@
     },
     "storage": {
         "output_dir": "./data/EKG",
-        "default_format": "CSV",
+        "default_format": "EDF",
         "auto_save_interval_min": 10,
         "retro_buffer_min": 5
     }

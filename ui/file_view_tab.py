@@ -1,8 +1,11 @@
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal, QTimer
 from PyQt6.QtWidgets import (QFrame, QVBoxLayout, QHBoxLayout, QGridLayout,
-                             QLabel, QPushButton, QWidget, QSplitter, QSlider, QListWidget, QListWidgetItem)
+                             QLabel, QPushButton, QWidget, QSplitter, QSlider, QListWidget, QListWidgetItem,
+                             QFileDialog, QMessageBox)
 import pyqtgraph as pg
 from resources import config
+from core.file_parser import FileParser
+import os
 
 FORMAT_COLORS = {
     "edf": "#7c6af7",
@@ -86,8 +89,22 @@ class FilesViewerTab(QFrame):
         self.settingsmanager = settingsmanager
         self.active_format = "edf"
         self.format_cards = {}
-
         self.recent_items_widgets = []
+
+        self.current_signal = None
+        self.is_playing = False
+        self.current_playback_time = 0.0
+        self.window_s = 5.0
+        self._is_slider_updating = False
+
+        self.play_timer = QTimer()
+        self.play_timer.setInterval(33)
+        self.play_timer.timeout.connect(self.on_play_tick)
+
+        self.plot_ecg = None
+        self.plot_ppg = None
+        self.ecg_curve = None
+        self.ppg_curve = None
 
         self.initUI()
         self.update_theme(self.settingsmanager.get_theme())
@@ -134,9 +151,10 @@ class FilesViewerTab(QFrame):
         lbl_drop.setProperty("cssClass", "section-title")
         drop_layout.addWidget(lbl_drop)
 
-        self.btn_load_file = QPushButton("📁 Przeciagnij plik tutaj\n\nlub kliknij, aby przegladac")
+        self.btn_load_file = QPushButton("Przeciagnij plik tutaj\nlub kliknij, aby przegladac")
         self.btn_load_file.setSizePolicy(self.btn_load_file.sizePolicy().Policy.Expanding,
                                          self.btn_load_file.sizePolicy().Policy.Expanding)
+        self.btn_load_file.clicked.connect(lambda: self.open_file_dialog(use_active_format=True))
         drop_layout.addWidget(self.btn_load_file)
         top_layout.addWidget(drop_container, stretch=1)
 
@@ -149,11 +167,7 @@ class FilesViewerTab(QFrame):
         recent_layout.addWidget(lbl_recent)
 
         self.recent_list = QListWidget()
-
-        self.add_recent_file(".edf", "nagranie_2024-03-20.edf", "EDF · 5 min", "edf")
-        self.add_recent_file(".hea", "mit-bih-arrhythmia/100.hea", "PhysioNet · 30 min", "wfdb")
-        self.add_recent_file(".csv", "eksport_pacjent_01.csv", "CSV · 2 min", "csv")
-
+        self.recent_list.itemClicked.connect(self.on_recent_clicked)
         recent_layout.addWidget(self.recent_list)
         top_layout.addWidget(recent_container, stretch=1)
 
@@ -167,15 +181,19 @@ class FilesViewerTab(QFrame):
         player_layout = QHBoxLayout(player_toolbar)
         player_layout.setContentsMargins(15, 8, 15, 8)
 
-        self.btn_play = QPushButton("▶ Odtwarzaj")
+        self.btn_play = QPushButton("Odtwarzaj")
         self.btn_play.setProperty("cssClass", "primary")
-        self.btn_stop = QPushButton("◼ Zatrzymaj")
+        self.btn_play.clicked.connect(self.toggle_playback)
+
+        self.btn_stop = QPushButton("Zatrzymaj")
+        self.btn_stop.clicked.connect(self.stop_playback)
 
         self.time_slider = QSlider(Qt.Orientation.Horizontal)
         self.time_slider.setRange(0, 1000)
         self.time_slider.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.time_slider.valueChanged.connect(self.on_slider_changed)
 
-        self.lbl_time = QLabel("00:00 / 05:00")
+        self.lbl_time = QLabel("00:00 / 00:00")
 
         player_layout.addWidget(self.btn_play)
         player_layout.addWidget(self.btn_stop)
@@ -186,13 +204,6 @@ class FilesViewerTab(QFrame):
 
         self.graphs_widget = pg.GraphicsLayoutWidget()
 
-        self.plot_ecg = self.graphs_widget.addPlot(title="EKG (Z pliku)")
-        self.plot_ecg.setLabel('left', 'Amplituda', units='mV')
-        self.graphs_widget.nextRow()
-        self.plot_ppg = self.graphs_widget.addPlot(title="PPG (Z pliku)")
-        self.plot_ppg.setLabel('left', 'Sygnal', units='ADC')
-        self.plot_ppg.setXLink(self.plot_ecg)
-
         bottom_layout.addWidget(player_toolbar)
         bottom_layout.addWidget(self.graphs_widget, stretch=1)
 
@@ -202,6 +213,9 @@ class FilesViewerTab(QFrame):
 
         main_layout.addWidget(splitter)
         self.set_active_card("edf")
+
+        # Puste wykresy na start
+        self._build_dynamic_plots(True, True)
 
     def add_format_card(self, grid, row, col, title, sub, ext, fmt_id):
         card = ClickableCard(title, sub, ext, fmt_id)
@@ -214,21 +228,116 @@ class FilesViewerTab(QFrame):
         for key, card in self.format_cards.items():
             card.set_active(key == fmt_id)
 
-    def add_recent_file(self, ext, filename, meta, fmt_id):
+    # --- LOGIKA PLIKOW ---
+
+    def open_file_dialog(self, use_active_format=False):
+        init_dir = self.settingsmanager.get_setting("storage", "output_dir")
+
+        filters = {
+            "edf": "Pliki EDF/EDF+ (*.edf)",
+            "wfdb": "Pliki PhysioNet WFDB (*.hea)",
+            "csv": "Pliki CSV/TXT (*.csv *.txt)",
+            "json": "Pliki JSON (*.json)"
+        }
+
+        all_filter_str = "Wszystkie pliki sygnalow (*.edf *.hea *.dat *.csv *.txt *.json);;Wszystkie pliki (*)"
+
+        if use_active_format and self.active_format in filters:
+            dialog_filter = f"{filters[self.active_format]};;{all_filter_str}"
+        else:
+            dialog_filter = all_filter_str
+
+        filepath, _ = QFileDialog.getOpenFileName(
+            self,
+            "Wybierz plik z danymi",
+            init_dir,
+            dialog_filter
+        )
+
+        if filepath:
+            self.load_and_display_file(filepath)
+
+    def load_and_display_file(self, filepath):
+        try:
+            self.current_signal = FileParser.load_file(filepath)
+
+            # Zatrzymanie aktualnego odtwarzania
+            self.stop_playback()
+
+            # Przebudowa interfejsu wykresow wzgledem wczytanych danych
+            self._build_dynamic_plots(self.current_signal.has_ecg, self.current_signal.has_ppg)
+
+            if self.current_signal.has_ecg:
+                self.ecg_curve.setData(self.current_signal.time, self.current_signal.ecg)
+
+            if self.current_signal.has_ppg:
+                self.ppg_curve.setData(self.current_signal.time, self.current_signal.ppg)
+
+            self.btn_load_file.setText(f"Wczytano: {self.current_signal.filename}\n{self.current_signal.get_summary()}")
+            self.btn_load_file.setStyleSheet(
+                self.btn_load_file.styleSheet() + f"border-color: {config.Colors.DARK_ACCENT};")
+
+            self.add_to_recent_files(filepath, self.current_signal)
+            self.update_playback_view()
+
+        except Exception as e:
+            QMessageBox.critical(self, "Blad wczytywania", f"Nie udalo sie wczytac pliku:\n{str(e)}")
+
+    def _build_dynamic_plots(self, has_ecg, has_ppg):
+        self.graphs_widget.clear()
+        self.plot_ecg = None
+        self.plot_ppg = None
+        self.ecg_curve = None
+        self.ppg_curve = None
+
+        if has_ecg:
+            self.plot_ecg = self.graphs_widget.addPlot(title="EKG (Z pliku)")
+            self.plot_ecg.setLabel('left', 'Amplituda', units='mV')
+            self.ecg_curve = self.plot_ecg.plot(pen=pg.mkPen(color=config.Colors.SIGNAL_ECG, width=1.5))
+            if has_ppg:
+                self.graphs_widget.nextRow()
+
+        if has_ppg:
+            self.plot_ppg = self.graphs_widget.addPlot(title="PPG (Z pliku)")
+            self.plot_ppg.setLabel('left', 'Sygnal', units='ADC')
+            self.ppg_curve = self.plot_ppg.plot(pen=pg.mkPen(color=config.Colors.SIGNAL_PPG, width=1.5))
+
+        if has_ecg and has_ppg:
+            self.plot_ppg.setXLink(self.plot_ecg)
+
+        self.update_theme(self.settingsmanager.get_theme())
+
+    def add_to_recent_files(self, filepath, signal_data):
+        for i in range(self.recent_list.count()):
+            if self.recent_list.item(i).data(Qt.ItemDataRole.UserRole) == filepath:
+                return
+
+        ext = os.path.splitext(filepath)[1].lower()
+        meta = signal_data.get_summary()
+
+        fmt_id = "csv"
+        if ext == '.edf':
+            fmt_id = "edf"
+        elif ext in ['.hea', '.dat']:
+            fmt_id = "wfdb"
+        elif ext == '.json':
+            fmt_id = "json"
+
         item = QListWidgetItem(self.recent_list)
+        item.setData(Qt.ItemDataRole.UserRole, filepath)
 
         widget = QWidget()
         layout = QHBoxLayout(widget)
         layout.setContentsMargins(10, 6, 10, 6)
 
         base_style = "border: none; background: transparent;"
-
         ext_color = FORMAT_COLORS.get(fmt_id, config.Colors.DARK_ACCENT)
+
         lbl_ext = QLabel(ext)
         lbl_ext.setStyleSheet(f"color: {ext_color}; font-size: 10pt; font-weight: bold; {base_style}")
         lbl_ext.setFixedWidth(40)
 
-        lbl_name = QLabel(filename)
+        lbl_name = QLabel(signal_data.filename)
         lbl_meta = QLabel(meta)
         lbl_meta.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
 
@@ -237,9 +346,90 @@ class FilesViewerTab(QFrame):
         layout.addWidget(lbl_meta)
 
         self.recent_items_widgets.append((lbl_name, lbl_meta))
-
         item.setSizeHint(widget.sizeHint())
+
+        self.recent_list.insertItem(0, item)
         self.recent_list.setItemWidget(item, widget)
+
+        self.update_theme(self.settingsmanager.get_theme())
+
+    def on_recent_clicked(self, item):
+        filepath = item.data(Qt.ItemDataRole.UserRole)
+        if filepath and os.path.exists(filepath):
+            self.load_and_display_file(filepath)
+        else:
+            QMessageBox.warning(self, "Blad", "Plik zostal przeniesiony lub usuniety z dysku.")
+
+    # --- LOGIKA ODTWARZACZA ---
+
+    def toggle_playback(self):
+        if not self.current_signal or self.current_signal.is_empty():
+            return
+
+        self.is_playing = not self.is_playing
+        if self.is_playing:
+            if self.current_playback_time >= self.current_signal.duration_sec:
+                self.current_playback_time = 0.0
+            self.play_timer.start()
+            self.btn_play.setText("Pauza")
+        else:
+            self.pause_playback()
+
+    def pause_playback(self):
+        self.is_playing = False
+        self.play_timer.stop()
+        self.btn_play.setText("Odtwarzaj")
+
+    def stop_playback(self):
+        self.pause_playback()
+        self.current_playback_time = 0.0
+        self.update_playback_view()
+
+    def on_play_tick(self):
+        self.current_playback_time += 0.033
+        if self.current_signal and self.current_playback_time >= self.current_signal.duration_sec:
+            self.current_playback_time = self.current_signal.duration_sec
+            self.pause_playback()
+        self.update_playback_view()
+
+    def on_slider_changed(self, value):
+        if self._is_slider_updating or not self.current_signal or self.current_signal.is_empty():
+            return
+
+        ratio = value / 1000.0
+        self.current_playback_time = ratio * self.current_signal.duration_sec
+        self.update_playback_view()
+
+    def update_playback_view(self):
+        if not self.current_signal or self.current_signal.is_empty():
+            self.lbl_time.setText("00:00 / 00:00")
+            return
+
+        # Zabezpieczenie zakresu
+        if self.current_playback_time > self.current_signal.duration_sec:
+            self.current_playback_time = self.current_signal.duration_sec
+
+        # Obliczanie zakresu okna X
+        x_max = max(self.window_s, self.current_playback_time)
+        x_min = x_max - self.window_s
+
+        if self.plot_ecg:
+            self.plot_ecg.getViewBox().setXRange(x_min, x_max, padding=0)
+        if self.plot_ppg:
+            self.plot_ppg.getViewBox().setXRange(x_min, x_max, padding=0)
+
+        # Etykieta czasu
+        curr_m, curr_s = divmod(int(self.current_playback_time), 60)
+        tot_m, tot_s = divmod(int(self.current_signal.duration_sec), 60)
+        self.lbl_time.setText(f"{curr_m:02d}:{curr_s:02d} / {tot_m:02d}:{tot_s:02d}")
+
+        # Pozycja suwaka
+        self._is_slider_updating = True
+        ratio = self.current_playback_time / self.current_signal.duration_sec if self.current_signal.duration_sec > 0 else 0
+        self.time_slider.setValue(int(ratio * 1000))
+        self._is_slider_updating = False
+
+    # --- STYLE ---
 
     def update_theme(self, theme):
         is_dark = theme == 'dark'
@@ -256,13 +446,15 @@ class FilesViewerTab(QFrame):
         grid_alpha = 0.3 if is_dark else 0.2
 
         self.graphs_widget.setBackground(bg_color)
+
         for plot in [self.plot_ecg, self.plot_ppg]:
-            plot.getAxis('left').setPen(text_sec)
-            plot.getAxis('left').setTextPen(text_sec)
-            plot.getAxis('bottom').setPen(text_sec)
-            plot.getAxis('bottom').setTextPen(text_sec)
-            plot.setTitle(plot.titleLabel.text, color=text_sec, size="10pt")
-            plot.showGrid(x=True, y=True, alpha=grid_alpha)
+            if plot:
+                plot.getAxis('left').setPen(text_sec)
+                plot.getAxis('left').setTextPen(text_sec)
+                plot.getAxis('bottom').setPen(text_sec)
+                plot.getAxis('bottom').setTextPen(text_sec)
+                plot.setTitle(plot.titleLabel.text, color=text_sec, size="10pt")
+                plot.showGrid(x=True, y=True, alpha=grid_alpha)
 
         self.btn_load_file.setStyleSheet(f"""
             QPushButton {{

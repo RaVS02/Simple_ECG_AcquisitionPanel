@@ -342,26 +342,31 @@ class LiveSignalsTab(QFrame):
 
     def _save_to_edf(self, filename, buffer_data, ecg_active, ppg_active):
         import pyedflib
+
         channel_info = []
         data_list = []
 
         if ecg_active:
-            ch = {'label': 'ECG', 'dimension': 'mV', 'sample_rate': self.sampling_rate, 'physical_max': 5.0,
+            ch = {'label': 'ECG', 'dimension': 'mV', 'sample_frequency': self.sampling_rate, 'physical_max': 5.0,
                   'physical_min': -5.0, 'digital_max': 32767, 'digital_min': -32768, 'transducer': 'AD8232',
                   'prefilter': ''}
             channel_info.append(ch)
-            data_list.append(np.array([r[0] for r in buffer_data]))
+            # Tworzymy jednowymiarową tablicę NumPy
+            data_list.append(np.array([r[0] for r in buffer_data], dtype=np.float64))
 
         if ppg_active:
-            ch = {'label': 'PPG', 'dimension': 'ADC', 'sample_rate': self.sampling_rate, 'physical_max': 100000.0,
-                  'physical_min': -100000.0, 'digital_max': 32767, 'digital_min': -32768, 'transducer': 'MAX30102',
+            ch = {'label': 'PPG', 'dimension': 'ADC', 'sample_frequency': self.sampling_rate, 'physical_max': 99999,
+                  'physical_min': -99999, 'digital_max': 32767, 'digital_min': -32768, 'transducer': 'MAX30102',
                   'prefilter': ''}
             channel_info.append(ch)
             idx = 1 if ecg_active else 0
-            data_list.append(np.array([r[idx] for r in buffer_data]))
+            # Tworzymy jednowymiarową tablicę NumPy
+            data_list.append(np.array([r[idx] for r in buffer_data], dtype=np.float64))
 
         f = pyedflib.EdfWriter(filename, len(channel_info), file_type=pyedflib.FILETYPE_EDFPLUS)
         f.setSignalHeaders(channel_info)
+
+        # Używamy poprawnej funkcji wysokopoziomowej, która przyjmuje listę tablic 1D
         f.writeSamples(data_list)
         f.close()
 
