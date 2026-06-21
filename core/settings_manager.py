@@ -45,7 +45,7 @@ class SettingsManager(QObject):
                 "moving_average_smoothing": True
             },
             "storage": {
-                "output_dir": "./data/EKG",
+                "output_dir": "./data/signals",
                 "default_format": "EDF",
                 "auto_save_interval_min": 10,
                 "retro_buffer_min": 5  # Zapis ostatnich 5 minut w tle
@@ -104,7 +104,6 @@ class SettingsManager(QObject):
         if category in self.config and key in self.config[category]:
             self.config[category][key] = value
             self.save_settings()
-
     def reset_to_defaults(self):
         """Przywraca konfiguracje domyslna i zapisuje ja do pliku."""
         import copy

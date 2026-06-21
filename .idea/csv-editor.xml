@@ -3,21 +3,14 @@
   <component name="CsvFileAttributes">
     <option name="attributeMap">
       <map>
-        <entry key="\data\EKG\ECG_1000Hz_PPG_1000Hz_REC_20260615_002559.csv">
+        <entry key="\data\EKG\ECG_1000Hz_PPG_1000Hz_REC_20260615_185937.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="\data\EKG\ECG_1000Hz_PPG_1000Hz_REC_20260615_122715.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\data\EKG\ECG_250Hz_PPG_250Hz_REC_20260615_002708.csv">
+        <entry key="\data\EKG\ECG_1000Hz_REC_20260615_185616.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

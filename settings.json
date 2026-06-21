@@ -12,26 +12,26 @@
     "channels_ecg": {
         "active": true,
         "rate_hz": 1000,
-        "lead": "aVF"
+        "lead": "I"
     },
     "channels_ppg": {
-        "raw_active": false,
+        "raw_active": true,
         "spo2_esp32": true,
         "rate_hz": 1000
     },
     "acquisition": {
         "gain": 1.0,
-        "y_scale_mv": 2.0,
+        "y_scale_mv": 5.0,
         "preview_window_s": 10.0
     },
     "dsp": {
         "notch_50hz": true,
         "bandpass_enabled": true,
-        "baseline_wander_removal": false,
-        "moving_average_smoothing": false
+        "baseline_wander_removal": true,
+        "moving_average_smoothing": true
     },
     "storage": {
-        "output_dir": "./data/EKG",
+        "output_dir": "./data/signals",
         "default_format": "CSV",
         "auto_save_interval_min": 10,
         "retro_buffer_min": 5

@@ -41,7 +41,7 @@ class SignalAnalyzer:
 
         base_order = int(settings.get("baseline_order", 2))
         band_order = int(settings.get("bandpass_order", 2))
-        notch_q = settings.get("notch_q", 30.0)
+        notch_q = settings.get("notch_q", 10.0)
 
         if settings.get("baseline_on", True):
             nyq = 0.5 * sr
